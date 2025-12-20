@@ -1,0 +1,44 @@
+{
+  "name": "mcp-ts-minimal",
+  "version": "0.1.1",
+  "main": "index.js",
+  "bin": {
+    "mcp-ts-minimal": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "biome lint src/",
+    "lint:fix": "biome lint --write src/",
+    "format": "biome format --write src/",
+    "format:check": "biome format src/",
+    "check": "biome check --write src/",
+    "check:ci": "biome check src/",
+    "typecheck": "tsc --noEmit",
+    "quality": "npm run typecheck && npm run check:ci",
+    "quality:fix": "npm run typecheck && npm run check",
+    "prepare": "husky"
+  },
+  "author": "atman-33",
+  "license": "MIT",
+  "description": "A minimal MCP server example with hello and echo tools",
+  "files": [
+    "dist",
+    "README.md",
+    "package.json",
+    "LICENSE"
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "2.2.2",
+    "@types/node": "^24.3.0",
+    "husky": "^9.1.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.24.6"
+  }
+}
