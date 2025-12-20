@@ -1,5 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { load } from 'js-yaml';
 import { server } from './index.js';
 
 describe('MCP Server', () => {
@@ -23,48 +24,51 @@ describe('MCP Server', () => {
   afterEach(async () => {
     await client.close();
     await server.close();
+    process.env.ALLOWED_COMMANDS = undefined;
   });
 
-  it('should list tools', async () => {
+  it('should list execute_command tool', async () => {
     const result = await client.listTools();
     expect(result.tools).toBeDefined();
-    expect(result.tools.length).toBeGreaterThan(0);
-    expect(result.tools.some((t) => t.name === 'hello')).toBe(true);
-    expect(result.tools.some((t) => t.name === 'echo')).toBe(true);
+    expect(result.tools.some((t) => t.name === 'execute_command')).toBe(true);
   });
 
-  it('should call hello tool', async () => {
+  it('should execute allowed command', async () => {
+    process.env.ALLOWED_COMMANDS = 'echo';
     const result = await client.callTool({
-      name: 'hello',
-      arguments: {},
+      name: 'execute_command',
+      arguments: { command: 'echo hello' },
     });
 
     expect(result.content).toBeDefined();
     expect((result.content as any)[0].type).toBe('text');
-
-    const content = (result.content as any)[0];
-    if (content.type === 'text') {
-      expect(content.text).toBe('Hello from MCP server');
-    } else {
-      throw new Error('Expected text content');
-    }
+    const text = (result.content as any)[0].text;
+    const output = load(text) as any;
+    expect(output.exit_code).toBe(0);
+    expect(output.stdout).toContain('hello');
   });
 
-  it('should call echo tool', async () => {
-    const message = 'Hello, World!';
+  it('should fail for disallowed command', async () => {
+    process.env.ALLOWED_COMMANDS = 'ls';
     const result = await client.callTool({
-      name: 'echo',
-      arguments: { message },
+      name: 'execute_command',
+      arguments: { command: 'echo hello' },
+    });
+
+    expect(result.isError).toBe(true);
+    expect((result.content as any)[0].text).toContain('not allowed');
+  });
+
+  it('should allow all commands with wildcard', async () => {
+    process.env.ALLOWED_COMMANDS = '*';
+    const result = await client.callTool({
+      name: 'execute_command',
+      arguments: { command: 'echo hello' },
     });
 
     expect(result.content).toBeDefined();
-    expect((result.content as any)[0].type).toBe('text');
-
-    const content = (result.content as any)[0];
-    if (content.type === 'text') {
-      expect(content.text).toBe(`Echo: ${message}`);
-    } else {
-      throw new Error('Expected text content');
-    }
+    const text = (result.content as any)[0].text;
+    const output = load(text) as any;
+    expect(output.exit_code).toBe(0);
   });
 });

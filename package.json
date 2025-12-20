@@ -27,6 +27,7 @@
   ],
   "devDependencies": {
     "@biomejs/biome": "^2.3.10",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.3.0",
     "husky": "^9.1.7",
     "ts-node": "^10.9.2",
@@ -36,6 +37,9 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
+    "args-tokenizer": "^0.3.0",
+    "js-yaml": "^4.1.1",
+    "tinyexec": "^1.0.2",
     "zod": "^3.25.76",
     "zod-to-json-schema": "^3.24.6"
   }

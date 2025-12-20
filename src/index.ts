@@ -1,95 +1,88 @@
 #!/usr/bin/env node
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { tokenizeArgs } from 'args-tokenizer';
+import { dump } from 'js-yaml';
+import { x } from 'tinyexec';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 
-// Input schema for the echo tool
-const EchoToolInputSchema = z.object({
-  message: z.string(),
-});
+// Hardcoded version to avoid import issues with outside rootDir
+const version = '0.1.0';
 
-// Create the MCP server
-export const server = new Server(
+const server = new McpServer(
   {
-    name: 'mcp-minimal',
-    version: '0.1.0',
+    name: 'mcp-terminal-runner',
+    version,
   },
   {
     capabilities: {
+      logging: {},
       tools: {},
     },
   }
 );
 
-// Handle tool calls
-server.setRequestHandler(CallToolRequestSchema, (request) => {
-  const { name, arguments: args } = request.params;
+server.tool(
+  'execute_command',
+  'Execute a shell command',
+  {
+    command: z.string().describe('The shell command to execute'),
+  },
+  async (args) => {
+    const [bin, ...commandArgs] = tokenizeArgs(args.command);
+    const allowedCommands =
+      process.env.ALLOWED_COMMANDS?.split(',').map((cmd) => cmd.trim()) || [];
 
-  switch (name) {
-    case 'hello':
-      return {
-        content: [{ type: 'text', text: 'Hello from MCP server' }],
-      };
-
-    case 'echo': {
-      const parsed = EchoToolInputSchema.safeParse(args);
-      if (!parsed.success) {
-        return {
-          content: [
-            { type: 'text', text: `Invalid arguments: ${parsed.error}` },
-          ],
-          isError: true,
-        };
+    try {
+      if (!(allowedCommands.includes('*') || allowedCommands.includes(bin))) {
+        throw new Error(
+          `Command "${bin}" is not allowed, allowed commands: ${
+            allowedCommands.length > 0 ? allowedCommands.join(', ') : '(none)'
+          }`
+        );
       }
 
-      return {
-        content: [{ type: 'text', text: `Echo: ${parsed.data.message}` }],
-      };
-    }
+      const result = await x(bin, commandArgs);
 
-    default:
       return {
-        content: [{ type: 'text', text: `Unknown tool: ${name}` }],
+        content: [
+          {
+            type: 'text',
+            text: dump({
+              exit_code: result.exitCode,
+              stdout: result.stdout,
+              stderr: result.stderr,
+            }),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error executing command: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          },
+        ],
         isError: true,
       };
+    }
   }
-});
+);
 
-// Handle list tools requests
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [
-    {
-      name: 'hello',
-      description: 'Responds with a greeting message',
-      inputSchema: { type: 'object', properties: {} },
-    },
-    {
-      name: 'echo',
-      description: 'Echoes the provided message',
-      inputSchema: zodToJsonSchema(EchoToolInputSchema),
-    },
-  ],
-}));
-
-// Start the server
-async function runServer() {
+async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  // Use stderr to avoid being treated as server response
-  console.error('MCP Minimal Server running on stdio');
 }
 
-// Run the server and handle fatal errors
-// Only run if this file is the main module
 if (require.main === module) {
-  runServer().catch((error) => {
-    console.error('Fatal error running server:', error);
+  main().catch((error) => {
+    console.error('Fatal error in main:', error);
     process.exit(1);
   });
 }
+
+export { server };
