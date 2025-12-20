@@ -1,9 +1,9 @@
 {
-  "name": "mcp-ts-minimal",
+  "name": "mcp-terminal-runner",
   "version": "0.1.0",
   "main": "index.js",
   "bin": {
-    "mcp-ts-minimal": "dist/index.js"
+    "mcp-terminal-runner": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
