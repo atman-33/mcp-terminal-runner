@@ -8,7 +8,7 @@ A minimal Model Context Protocol (MCP) server implementation in TypeScript that 
 - **Echo Tool**: Echoes back any message you provide
 - Built with TypeScript and the official MCP SDK
 - Input validation using Zod schemas
-- Development tools: Biome for linting/formatting, Husky for git hooks
+- Development tools: Ultracite for linting/formatting, Husky for git hooks
 
 ## Installation
 
@@ -91,15 +91,10 @@ If you publish this package to npm, you can use it with npx:
 - `npm run build` - Build the TypeScript project
 - `npm run dev` - Run in development mode with ts-node
 - `npm start` - Run the built JavaScript version
-- `npm run lint` - Lint the code with Biome
-- `npm run lint:fix` - Lint and fix issues automatically
-- `npm run format` - Format code with Biome
-- `npm run format:check` - Check code formatting
-- `npm run check` - Run Biome checks and fix issues
-- `npm run check:ci` - Run Biome checks for CI
+- `npm run check` - Check code with Ultracite
+- `npm run fix` - Check and fix issues with Ultracite
 - `npm run typecheck` - Run TypeScript type checking
-- `npm run quality` - Run type checking and CI checks
-- `npm run quality:fix` - Run type checking and fix issues
+- `npm run quality` - Run typecheck and check
 
 ### Project Structure
 
@@ -163,7 +158,7 @@ MIT License - see LICENSE file for details.
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Run `npm run quality:fix` to ensure code quality
+4. Run `npm run quality` to ensure code quality
 5. Commit your changes (Husky will run pre-commit hooks)
 6. Push to your branch
 7. Create a Pull Request
