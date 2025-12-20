@@ -17,7 +17,6 @@ const server = new McpServer(
   },
   {
     capabilities: {
-      logging: {},
       tools: {},
     },
   }

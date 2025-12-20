@@ -18,7 +18,7 @@
   },
   "author": "atman-33",
   "license": "MIT",
-  "description": "A minimal MCP server example with hello and echo tools",
+  "description": "MCP server for executing shell commands safely",
   "files": [
     "dist",
     "README.md",
