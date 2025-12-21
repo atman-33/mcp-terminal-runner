@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { realpath, stat } from 'node:fs/promises';
-import { isAbsolute, relative, resolve } from 'node:path';
+import { isAbsolute, posix, relative, resolve } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { tokenizeArgs } from 'args-tokenizer';
@@ -51,6 +51,25 @@ const isWithinRoot = (root: string, target: string): boolean => {
 };
 
 const resolveAndValidateCwd = async (cwdInput: string): Promise<string> => {
+  if (process.platform === 'win32' && cwdInput.startsWith('/')) {
+    const allowedRoots = parseCommaSeparatedEnv(process.env.ALLOWED_CWD_ROOTS);
+    if (allowedRoots.length === 0) {
+      return cwdInput;
+    }
+
+    const cwdNormalized = posix.normalize(cwdInput);
+    const allowed = allowedRoots.some((root) => {
+      const rel = posix.relative(root, cwdNormalized);
+      return rel === '' || !(rel.startsWith('..') || posix.isAbsolute(rel));
+    });
+
+    if (!allowed) {
+      throw new Error('cwd is not allowed by ALLOWED_CWD_ROOTS');
+    }
+
+    return cwdInput;
+  }
+
   const cwdResolved = resolve(process.cwd(), cwdInput);
 
   try {
@@ -164,7 +183,18 @@ server.tool(
       const cwdResolved = args.cwd
         ? await resolveAndValidateCwd(args.cwd)
         : undefined;
-      const result = await runCommand(bin, commandArgs, cwdResolved);
+
+      let finalBin = bin;
+      let finalArgs = commandArgs;
+      let finalCwd = cwdResolved;
+
+      if (process.platform === 'win32' && cwdResolved?.startsWith('/')) {
+        finalBin = 'wsl';
+        finalArgs = ['--cd', cwdResolved, '--', bin, ...commandArgs];
+        finalCwd = undefined;
+      }
+
+      const result = await runCommand(finalBin, finalArgs, finalCwd);
 
       return {
         content: [
