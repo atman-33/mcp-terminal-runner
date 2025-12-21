@@ -6,7 +6,7 @@ An MCP server that allows AI agents to execute terminal commands on the host sys
 
 - **Execute Command**: Run shell commands and retrieve stdout, stderr, and exit code.
 - **Security**: Strict allowlist system via `ALLOWED_COMMANDS` environment variable.
-- **Cross-Platform**: Works on Linux, macOS, and Windows (via `tinyexec`).
+- **Cross-Platform**: Works on Linux, macOS, and Windows.
 
 ## Installation
 
@@ -42,6 +42,16 @@ For security reasons, this server requires an explicit list of allowed commands.
 - **Format**: Comma-separated list of command binaries (e.g., `ls,cat,echo`).
 - **Wildcard**: Set to `*` to allow ALL commands (⚠️ **DANGEROUS**: Only use in trusted environments).
 
+### Security (Optional): Allowed Working Directory Roots
+
+If you enable `cwd` (see tool input below), you can optionally restrict which working directories are allowed via `ALLOWED_CWD_ROOTS`.
+
+- **Format**: Comma-separated list of allowed root paths.
+- **Behavior**:
+  - If **unset or empty**, `cwd` is not restricted (any existing directory is allowed).
+  - If set, the resolved and canonical `cwd` must be within at least one configured root.
+  - If set and any configured root cannot be canonicalized (e.g., does not exist), requests that provide `cwd` are rejected (configuration error).
+
 ## Usage
 
 ### MCP Client Configuration
@@ -69,6 +79,7 @@ Executes a shell command.
 
 - **Input**:
   - `command` (string): The full command string to execute (e.g., `ls -la src`).
+  - `cwd` (string, optional): Working directory to execute the command within.
 - **Output**:
   - Returns a YAML-formatted string containing:
     - `exit_code`: The command's exit code.

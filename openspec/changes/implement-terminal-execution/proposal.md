@@ -8,7 +8,7 @@ The project aims to provide a bridge between AI agents and the local shell envir
 
 ## Solution
 - Use `@modelcontextprotocol/sdk` to create the MCP server.
-- Use `tinyexec` for command execution (as per reference code).
+- Use `node:child_process` for command execution.
 - Use `args-tokenizer` for parsing arguments (as per reference code).
 - Use `zod` for schema validation.
 - Implement an `execute_command` tool.
@@ -19,4 +19,4 @@ The project aims to provide a bridge between AI agents and the local shell envir
 - **Platform Compatibility:** Shell commands behave differently across OSs. The initial focus is Linux/Unix-like environments.
 
 ## Alternatives
-- Using `child_process` directly instead of `tinyexec`. `tinyexec` is chosen based on the reference implementation for likely better cross-platform handling or simplicity.
+- Using a third-party wrapper instead of `node:child_process`. We prefer the Node built-in to avoid an extra runtime dependency and to support `cwd` directly.

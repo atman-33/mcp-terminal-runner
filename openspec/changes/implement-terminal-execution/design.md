@@ -11,7 +11,7 @@ The solution follows the standard MCP server architecture using the TypeScript S
     -   Input: `command` string.
     -   Validation: Check against `ALLOWED_COMMANDS` environment variable.
     -   Parsing: Use `args-tokenizer` to split the command string.
-    -   Execution: Use `tinyexec` to run the command.
+    -   Execution: Use `node:child_process` to run the command.
     -   Output: JSON object containing `exit_code`, `stdout`, and `stderr`.
 
 ## Data Flow
@@ -24,11 +24,10 @@ The solution follows the standard MCP server architecture using the TypeScript S
 ## Security Considerations
 -   **Allowlist:** `ALLOWED_COMMANDS` env var controls which binaries can be executed.
 -   **Wildcard:** `*` allows all commands (use with caution).
--   **Input Sanitization:** `args-tokenizer` helps in parsing, but the underlying execution relies on `tinyexec` handling arguments correctly.
+-   **Input Sanitization:** `args-tokenizer` helps in parsing, and execution uses Node's built-in process spawning.
 
 ## Dependencies
 -   `@modelcontextprotocol/sdk`
--   `tinyexec`
 -   `args-tokenizer`
 -   `zod`
 -   `js-yaml` (for formatting output as per reference, though JSON might be sufficient, we'll stick to reference for now or decide in implementation) -> Reference uses `dump` from `js-yaml` to format the result text.
