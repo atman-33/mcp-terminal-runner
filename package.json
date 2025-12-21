@@ -19,6 +19,11 @@
   "author": "atman-33",
   "license": "MIT",
   "description": "MCP server for executing shell commands safely",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atman-33/mcp-terminal-runner.git"
+  },
+  "homepage": "https://github.com/atman-33/mcp-terminal-runner",
   "files": [
     "dist",
     "README.md",
