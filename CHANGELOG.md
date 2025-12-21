@@ -2,6 +2,21 @@
 
 ---
 
+## v0.1.2 2025-12-21
+
+### Added
+
+- auto-detect and use WSL for Linux paths on Windows
+
+### Changed
+
+- feature/wsl-support
+- Merge pull request #3 from atman-33/version-bump/v0.1.1
+
+### Fixed
+
+- add newline at end of package.json
+
 ## v0.1.1 2025-12-21
 
 ### Changed
