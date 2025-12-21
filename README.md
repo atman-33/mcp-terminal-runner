@@ -1,28 +1,97 @@
-# MCP TypeScript Minimal Server
+# MCP Terminal Runner
 
-A minimal Model Context Protocol (MCP) server implementation in TypeScript that demonstrates basic tool functionality with `hello` and `echo` commands.
+An MCP server that allows AI agents to execute terminal commands on the host system.
 
 ## Features
 
-- **Hello Tool**: Returns a simple greeting message
-- **Echo Tool**: Echoes back any message you provide
-- Built with TypeScript and the official MCP SDK
-- Input validation using Zod schemas
-- Development tools: Ultracite for linting/formatting, Husky for git hooks
+- **Execute Command**: Run shell commands and retrieve stdout, stderr, and exit code.
+- **Security**: Strict allowlist system via `ALLOWED_COMMANDS` environment variable.
+- **Cross-Platform**: Works on Linux, macOS, and Windows.
 
-## Installation
-
-### Prerequisites
+## Prerequisites
 
 - Node.js (version 18 or higher)
-- npm or yarn
+
+## Configuration
+
+### Security: Allowed Commands
+
+For security reasons, this server requires an explicit list of allowed commands. This is configured via the `ALLOWED_COMMANDS` environment variable.
+
+- **Format**: Comma-separated list of command binaries (e.g., `ls,cat,echo`).
+- **Wildcard**: Set to `*` to allow ALL commands (⚠️ **DANGEROUS**: Only use in trusted environments).
+
+### Security (Optional): Allowed Working Directory Roots
+
+If you enable `cwd` (see tool input below), you can optionally restrict which working directories are allowed via `ALLOWED_CWD_ROOTS`.
+
+- **Format**: Comma-separated list of allowed root paths.
+- **Behavior**:
+  - If **unset or empty**, `cwd` is not restricted (any existing directory is allowed).
+  - If set, the resolved and canonical `cwd` must be within at least one configured root.
+  - If set and any configured root cannot be canonicalized (e.g., does not exist), requests that provide `cwd` are rejected (configuration error).
+
+## Usage
+
+### MCP Client Configuration
+
+Add the following to your MCP client configuration (e.g., VS Code `settings.json`):
+
+#### Basic Configuration
+
+```json
+{
+  "mcpServers": {
+    "terminal-runner": {
+      "command": "npx",
+      "args": ["-y", "mcp-terminal-runner"],
+      "env": {
+        "ALLOWED_COMMANDS": "ls,cat,grep,echo"
+      }
+    }
+  }
+}
+```
+
+#### Configuration with Allowed Working Directories
+
+```json
+{
+  "mcpServers": {
+    "terminal-runner": {
+      "command": "npx",
+      "args": ["-y", "mcp-terminal-runner"],
+      "env": {
+        "ALLOWED_COMMANDS": "ls,cat,grep,echo",
+        "ALLOWED_CWD_ROOTS": "/home/user/projects,/tmp"
+      }
+    }
+  }
+}
+```
+
+### Available Tools
+
+#### `execute_command`
+Executes a shell command.
+
+- **Input**:
+  - `command` (string): The full command string to execute (e.g., `ls -la src`).
+  - `cwd` (string, optional): Working directory to execute the command within.
+- **Output**:
+  - Returns a YAML-formatted string containing:
+    - `exit_code`: The command's exit code.
+    - `stdout`: Standard output.
+    - `stderr`: Standard error.
+
+## Development
 
 ### Setup
 
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd mcp-ts-minimal
+cd mcp-terminal-runner
 ```
 
 2. Install dependencies:
@@ -35,71 +104,18 @@ npm install
 npm run build
 ```
 
-## Usage
-
-### Running the Server
-
-#### Development Mode
-```bash
-npm run dev
-```
-
-#### Production Mode
-```bash
-npm start
-```
-
-### Available Tools
-
-#### 1. Hello Tool
-- **Name**: `hello`
-- **Description**: Responds with a greeting message
-- **Parameters**: None
-- **Example Response**: "Hello from MCP server"
-
-#### 2. Echo Tool
-- **Name**: `echo`
-- **Description**: Echoes the provided message
-- **Parameters**:
-  - `message` (string, required): The message to echo back
-- **Example Response**: "Echo: Your message here"
-
-## MCP Client Configuration
-
-To use this server with an MCP client, add the following configuration to your MCP settings:
-
-### Using with npx (Recommended)
-
-If you publish this package to npm, you can use it with npx:
-
-```json
-{
-  "mcpServers": {
-    "mcp-ts-minimal": {
-      "command": "npx",
-      "args": ["mcp-ts-minimal@latest"],
-      "disabled": false
-    }
-  }
-}
-```
-
-## Development
-
 ### Available Scripts
 
 - `npm run build` - Build the TypeScript project
-- `npm run dev` - Run in development mode with ts-node
+- `npm run dev` - Run in development mode
 - `npm start` - Run the built JavaScript version
 - `npm run check` - Check code with Ultracite
-- `npm run fix` - Check and fix issues with Ultracite
-- `npm run typecheck` - Run TypeScript type checking
-- `npm run quality` - Run typecheck and check
+- `npm test` - Run tests with Vitest
 
 ### Project Structure
 
 ```
-mcp-ts-minimal/
+mcp-terminal-runner/
 ├── src/
 │   └── index.ts          # Main server implementation
 ├── dist/                 # Built JavaScript files
@@ -108,45 +124,6 @@ mcp-ts-minimal/
 ├── tsconfig.json        # TypeScript configuration
 ├── package.json         # Project dependencies and scripts
 └── README.md           # This file
-```
-
-### Adding New Tools
-
-To add a new tool to the server:
-
-1. Define the input schema using Zod:
-```typescript
-const MyToolInputSchema = z.object({
-  param1: z.string(),
-  param2: z.number().optional(),
-});
-```
-
-2. Add the tool handler in the `CallToolRequestSchema` handler:
-```typescript
-case 'my-tool': {
-  const parsed = MyToolInputSchema.safeParse(args);
-  if (!parsed.success) {
-    return {
-      content: [{ type: 'text', text: `Invalid arguments: ${parsed.error}` }],
-      isError: true,
-    };
-  }
-  
-  // Your tool logic here
-  return {
-    content: [{ type: 'text', text: 'Tool response' }],
-  };
-}
-```
-
-3. Add the tool definition in the `ListToolsRequestSchema` handler:
-```typescript
-{
-  name: 'my-tool',
-  description: 'Description of what your tool does',
-  inputSchema: zodToJsonSchema(MyToolInputSchema),
-}
 ```
 
 ## License

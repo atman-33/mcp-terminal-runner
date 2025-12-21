@@ -1,24 +1,21 @@
 #!/usr/bin/env node
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { spawn } from 'node:child_process';
+import { realpath, stat } from 'node:fs/promises';
+import { isAbsolute, relative, resolve } from 'node:path';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+import { tokenizeArgs } from 'args-tokenizer';
+import { dump } from 'js-yaml';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 
-// Input schema for the echo tool
-const EchoToolInputSchema = z.object({
-  message: z.string(),
-});
+// Hardcoded version to avoid import issues with outside rootDir
+const version = '0.1.0';
 
-// Create the MCP server
-export const server = new Server(
+const server = new McpServer(
   {
-    name: 'mcp-minimal',
-    version: '0.1.0',
+    name: 'mcp-terminal-runner',
+    version,
   },
   {
     capabilities: {
@@ -27,69 +24,186 @@ export const server = new Server(
   }
 );
 
-// Handle tool calls
-server.setRequestHandler(CallToolRequestSchema, (request) => {
-  const { name, arguments: args } = request.params;
+type CommandResult = {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+};
 
-  switch (name) {
-    case 'hello':
-      return {
-        content: [{ type: 'text', text: 'Hello from MCP server' }],
-      };
+const parseCommaSeparatedEnv = (value: string | undefined): string[] => {
+  if (!value) {
+    return [];
+  }
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+};
 
-    case 'echo': {
-      const parsed = EchoToolInputSchema.safeParse(args);
-      if (!parsed.success) {
-        return {
-          content: [
-            { type: 'text', text: `Invalid arguments: ${parsed.error}` },
-          ],
-          isError: true,
-        };
+const isWithinRoot = (root: string, target: string): boolean => {
+  const rel = relative(root, target);
+  if (rel === '') {
+    return true;
+  }
+
+  const isOutsideRoot = rel.startsWith('..') || isAbsolute(rel);
+  return !isOutsideRoot;
+};
+
+const resolveAndValidateCwd = async (cwdInput: string): Promise<string> => {
+  const cwdResolved = resolve(process.cwd(), cwdInput);
+
+  try {
+    const cwdStat = await stat(cwdResolved);
+    if (!cwdStat.isDirectory()) {
+      throw new Error(`cwd is not a directory: ${cwdInput}`);
+    }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes('cwd is not a directory')
+    ) {
+      throw error;
+    }
+    throw new Error(`cwd does not exist: ${cwdInput}`);
+  }
+
+  const cwdCanonical = await realpath(cwdResolved);
+
+  const allowedRoots = parseCommaSeparatedEnv(process.env.ALLOWED_CWD_ROOTS);
+  if (allowedRoots.length === 0) {
+    return cwdResolved;
+  }
+
+  const canonicalRoots = await Promise.all(
+    allowedRoots.map(async (root) => {
+      const rootResolved = resolve(process.cwd(), root);
+      try {
+        return await realpath(rootResolved);
+      } catch {
+        throw new Error(
+          `Invalid configuration: ALLOWED_CWD_ROOTS contains an invalid root: ${root}`
+        );
+      }
+    })
+  );
+
+  const allowed = canonicalRoots.some((root) =>
+    isWithinRoot(root, cwdCanonical)
+  );
+  if (!allowed) {
+    throw new Error('cwd is not allowed by ALLOWED_CWD_ROOTS');
+  }
+
+  return cwdResolved;
+};
+
+const runCommand = async (
+  bin: string,
+  args: string[],
+  cwd?: string
+): Promise<CommandResult> =>
+  new Promise<CommandResult>((resolvePromise, rejectPromise) => {
+    const child = spawn(bin, args, {
+      cwd,
+      shell: false,
+      windowsHide: true,
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout?.setEncoding('utf8');
+    child.stderr?.setEncoding('utf8');
+
+    child.stdout?.on('data', (chunk: string) => {
+      stdout += chunk;
+    });
+    child.stderr?.on('data', (chunk: string) => {
+      stderr += chunk;
+    });
+
+    child.on('error', (error) => {
+      rejectPromise(error);
+    });
+
+    child.on('close', (code) => {
+      resolvePromise({
+        exitCode: typeof code === 'number' ? code : 1,
+        stdout,
+        stderr,
+      });
+    });
+  });
+
+server.tool(
+  'execute_command',
+  'Execute a shell command',
+  {
+    command: z.string().describe('The shell command to execute'),
+    cwd: z
+      .string()
+      .optional()
+      .describe('Optional working directory to execute the command within'),
+  },
+  async (args) => {
+    const [bin, ...commandArgs] = tokenizeArgs(args.command);
+    const allowedCommands = parseCommaSeparatedEnv(
+      process.env.ALLOWED_COMMANDS
+    );
+
+    try {
+      if (!(allowedCommands.includes('*') || allowedCommands.includes(bin))) {
+        throw new Error(
+          `Command "${bin}" is not allowed, allowed commands: ${
+            allowedCommands.length > 0 ? allowedCommands.join(', ') : '(none)'
+          }`
+        );
       }
 
-      return {
-        content: [{ type: 'text', text: `Echo: ${parsed.data.message}` }],
-      };
-    }
+      const cwdResolved = args.cwd
+        ? await resolveAndValidateCwd(args.cwd)
+        : undefined;
+      const result = await runCommand(bin, commandArgs, cwdResolved);
 
-    default:
       return {
-        content: [{ type: 'text', text: `Unknown tool: ${name}` }],
+        content: [
+          {
+            type: 'text',
+            text: dump({
+              exit_code: result.exitCode,
+              stdout: result.stdout,
+              stderr: result.stderr,
+            }),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Error executing command: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          },
+        ],
         isError: true,
       };
+    }
   }
-});
+);
 
-// Handle list tools requests
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [
-    {
-      name: 'hello',
-      description: 'Responds with a greeting message',
-      inputSchema: { type: 'object', properties: {} },
-    },
-    {
-      name: 'echo',
-      description: 'Echoes the provided message',
-      inputSchema: zodToJsonSchema(EchoToolInputSchema),
-    },
-  ],
-}));
-
-// Start the server
-async function runServer() {
+async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  // Use stderr to avoid being treated as server response
-  console.error('MCP Minimal Server running on stdio');
 }
 
-// Run the server and handle fatal errors
-// Only run if this file is the main module
 if (require.main === module) {
-  runServer().catch((error) => {
-    console.error('Fatal error running server:', error);
+  main().catch((error) => {
+    console.error('Fatal error in main:', error);
     process.exit(1);
   });
 }
+
+export { server };
