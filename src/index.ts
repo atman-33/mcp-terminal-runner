@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-import { spawn } from 'node:child_process';
 import { realpath, stat } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { tokenizeArgs } from 'args-tokenizer';
+import spawn from 'cross-spawn';
 import { dump } from 'js-yaml';
 import { z } from 'zod';
 
