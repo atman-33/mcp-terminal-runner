@@ -8,30 +8,9 @@ An MCP server that allows AI agents to execute terminal commands on the host sys
 - **Security**: Strict allowlist system via `ALLOWED_COMMANDS` environment variable.
 - **Cross-Platform**: Works on Linux, macOS, and Windows.
 
-## Installation
-
-### Prerequisites
+## Prerequisites
 
 - Node.js (version 18 or higher)
-- npm or yarn
-
-### Setup
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd mcp-terminal-runner
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Build the project:
-```bash
-npm run build
-```
 
 ## Configuration
 
@@ -58,14 +37,33 @@ If you enable `cwd` (see tool input below), you can optionally restrict which wo
 
 Add the following to your MCP client configuration (e.g., VS Code `settings.json`):
 
+#### Basic Configuration
+
 ```json
 {
   "mcpServers": {
     "terminal-runner": {
-      "command": "node",
-      "args": ["/path/to/mcp-terminal-runner/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "mcp-terminal-runner"],
       "env": {
         "ALLOWED_COMMANDS": "ls,cat,grep,echo"
+      }
+    }
+  }
+}
+```
+
+#### Configuration with Allowed Working Directories
+
+```json
+{
+  "mcpServers": {
+    "terminal-runner": {
+      "command": "npx",
+      "args": ["-y", "mcp-terminal-runner"],
+      "env": {
+        "ALLOWED_COMMANDS": "ls,cat,grep,echo",
+        "ALLOWED_CWD_ROOTS": "/home/user/projects,/tmp"
       }
     }
   }
@@ -87,6 +85,24 @@ Executes a shell command.
     - `stderr`: Standard error.
 
 ## Development
+
+### Setup
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd mcp-terminal-runner
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Build the project:
+```bash
+npm run build
+```
 
 ### Available Scripts
 
