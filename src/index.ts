@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { execSync } from 'node:child_process';
 import { realpath, stat } from 'node:fs/promises';
 import { isAbsolute, posix, relative, resolve } from 'node:path';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -154,6 +155,24 @@ const runCommand = async (
     });
   });
 
+const getWslCwd = (): string | undefined => {
+  if (process.platform !== 'win32') {
+    return;
+  }
+  try {
+    // Try to convert current working directory to WSL path
+    const wslPath = execSync(`wsl wslpath -u "${process.cwd()}"`)
+      .toString()
+      .trim();
+    if (wslPath.startsWith('/')) {
+      return wslPath;
+    }
+  } catch {
+    // Ignore errors if wsl/wslpath is not available or fails
+  }
+  return;
+};
+
 server.tool(
   'execute_command',
   'Execute a shell command',
@@ -179,8 +198,10 @@ server.tool(
         );
       }
 
-      const cwdResolved = args.cwd
-        ? await resolveAndValidateCwd(args.cwd)
+      const cwdToUse = args.cwd ?? getWslCwd();
+
+      const cwdResolved = cwdToUse
+        ? await resolveAndValidateCwd(cwdToUse)
         : undefined;
 
       let finalCommand = args.command;
