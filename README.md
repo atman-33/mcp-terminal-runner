@@ -4,7 +4,7 @@ An MCP server that allows AI agents to execute terminal commands on the host sys
 
 ## Features
 
-- **Execute Command**: Run shell commands and retrieve stdout, stderr, and exit code.
+- **Execute Command**: Run shell commands and retrieve stdout, stderr, and exit code. Supports pipes, redirects, and command chaining (e.g., `&&`).
 - **Security**: Strict allowlist system via `ALLOWED_COMMANDS` environment variable.
 - **Cross-Platform**: Works on Linux, macOS, and Windows.
 
@@ -20,6 +20,7 @@ For security reasons, this server requires an explicit list of allowed commands.
 
 - **Format**: Comma-separated list of command binaries (e.g., `ls,cat,echo`).
 - **Wildcard**: Set to `*` to allow ALL commands (⚠️ **DANGEROUS**: Only use in trusted environments).
+- **Validation**: The server validates only the **first command** in the chain against the allowlist. For example, in `echo hello && ls`, only `echo` is checked.
 
 ### Security (Optional): Allowed Working Directory Roots
 
