@@ -2,6 +2,18 @@
 
 ---
 
+## v0.2.2 2025-12-22
+
+### Changed
+
+- fix/auto-detect-wsl-cwd
+- Merge pull request #9 from atman-33/version-bump/v0.2.1
+
+### Fixed
+
+- add newline at end of package.json
+- auto-detect WSL cwd when not provided
+
 ## v0.2.1 2025-12-22
 
 ### Changed
