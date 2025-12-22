@@ -2,6 +2,18 @@
 
 ---
 
+## v0.2.0 2025-12-22
+
+### Changed
+
+- fix/enable-shell-execution
+- update README to reflect shell execution support
+- Merge pull request #5 from atman-33/version-bump/v0.1.2
+
+### Fixed
+
+- enable shell execution for commands
+
 ## v0.1.2 2025-12-21
 
 ### Added
