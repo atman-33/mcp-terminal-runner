@@ -84,7 +84,7 @@ describe('MCP Server', () => {
     const result = await client.callTool({
       name: 'execute_command',
       arguments: {
-        command: 'node -p process.cwd()',
+        command: "node -p 'process.cwd()'",
         cwd: cwdDir,
       },
     });
@@ -112,7 +112,7 @@ describe('MCP Server', () => {
     const result = await client.callTool({
       name: 'execute_command',
       arguments: {
-        command: 'node -p process.cwd()',
+        command: "node -p 'process.cwd()'",
         cwd: relativeCwd,
       },
     });
@@ -156,7 +156,7 @@ describe('MCP Server', () => {
     const allowedResult = await client.callTool({
       name: 'execute_command',
       arguments: {
-        command: 'node -p process.cwd()',
+        command: "node -p 'process.cwd()'",
         cwd: childDir,
       },
     });
@@ -203,5 +203,22 @@ describe('MCP Server', () => {
     expect(result.isError).toBe(true);
     expect((result.content as any)[0].text).toContain('Invalid configuration');
     expect((result.content as any)[0].text).toContain('ALLOWED_CWD_ROOTS');
+  });
+
+  it('should execute chained commands with &&', async () => {
+    process.env.ALLOWED_COMMANDS = 'echo';
+    const result = await client.callTool({
+      name: 'execute_command',
+      arguments: {
+        command: 'echo hello && echo world',
+      },
+    });
+
+    expect(result.isError).not.toBe(true);
+    const text = (result.content as any)[0].text;
+    const output = load(text) as any;
+    expect(output.exit_code).toBe(0);
+    expect(output.stdout).toContain('hello');
+    expect(output.stdout).toContain('world');
   });
 });
