@@ -2,6 +2,17 @@
 
 ---
 
+## v0.2.1 2025-12-22
+
+### Changed
+
+- Merge pull request #8 from atman-33/fix/execution-enoent
+- Merge pull request #7 from atman-33/version-bump/v0.2.0
+
+### Fixed
+
+- execute commands correctly with shell: true
+
 ## v0.2.0 2025-12-22
 
 ### Changed
