@@ -118,14 +118,13 @@ const resolveAndValidateCwd = async (cwdInput: string): Promise<string> => {
 };
 
 const runCommand = async (
-  bin: string,
-  args: string[],
+  command: string,
   cwd?: string
 ): Promise<CommandResult> =>
   new Promise<CommandResult>((resolvePromise, rejectPromise) => {
-    const child = spawn(bin, args, {
+    const child = spawn(command, [], {
       cwd,
-      shell: false,
+      shell: true,
       windowsHide: true,
     });
 
@@ -166,7 +165,7 @@ server.tool(
       .describe('Optional working directory to execute the command within'),
   },
   async (args) => {
-    const [bin, ...commandArgs] = tokenizeArgs(args.command);
+    const [bin] = tokenizeArgs(args.command);
     const allowedCommands = parseCommaSeparatedEnv(
       process.env.ALLOWED_COMMANDS
     );
@@ -184,17 +183,18 @@ server.tool(
         ? await resolveAndValidateCwd(args.cwd)
         : undefined;
 
-      let finalBin = bin;
-      let finalArgs = commandArgs;
+      let finalCommand = args.command;
       let finalCwd = cwdResolved;
 
       if (process.platform === 'win32' && cwdResolved?.startsWith('/')) {
-        finalBin = 'wsl';
-        finalArgs = ['--cd', cwdResolved, '--', bin, ...commandArgs];
+        finalCommand = `wsl --cd "${cwdResolved}" -- bash -c "${args.command.replace(
+          /"/g,
+          '\\"'
+        )}"`;
         finalCwd = undefined;
       }
 
-      const result = await runCommand(finalBin, finalArgs, finalCwd);
+      const result = await runCommand(finalCommand, finalCwd);
 
       return {
         content: [
