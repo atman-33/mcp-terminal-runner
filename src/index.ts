@@ -122,7 +122,7 @@ const runCommand = async (
   cwd?: string
 ): Promise<CommandResult> =>
   new Promise<CommandResult>((resolvePromise, rejectPromise) => {
-    const child = spawn(command, [], {
+    const child = spawn(command, {
       cwd,
       shell: true,
       windowsHide: true,
