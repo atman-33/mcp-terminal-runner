@@ -8,9 +8,12 @@ The server MUST provide a tool named `start_command` to initiate a background co
 - **Arguments**:
   - `command` (string): The command to execute.
   - `cwd` (string, optional): The working directory.
+  - `timeout` (number, optional): Maximum time (in milliseconds) to wait for initial output. Default is 0 (no wait).
 - **Returns**:
   - `sessionId` (string): Unique identifier for the session.
   - `pid` (number): Process ID.
+  - `stdout` (string, optional): Initial standard output if `timeout` is used.
+  - `stderr` (string, optional): Initial standard error if `timeout` is used.
 
 #### Scenario: Start a long-running process
 - **GIVEN** the server is running
@@ -19,11 +22,20 @@ The server MUST provide a tool named `start_command` to initiate a background co
 - **THEN** the server starts the process in the background
 - **AND** returns a valid `sessionId` and `pid`
 
+#### Scenario: Start and wait for initial output
+- **GIVEN** the server is running
+- **AND** `ALLOWED_COMMANDS` includes `echo`
+- **WHEN** the client calls `start_command` with `command: "echo hello"`, `timeout: 1000`
+- **THEN** the server starts the process
+- **AND** waits for output (up to 1000ms)
+- **AND** returns `sessionId`, `pid`, and `stdout: "hello\n"`
+
 ### Requirement: Read Session Output
 The server MUST provide a tool named `read_output` to retrieve buffered output from a session.
 
 - **Arguments**:
   - `sessionId` (string): The ID of the session.
+  - `timeout` (number, optional): Maximum time (in milliseconds) to wait for new output if the buffer is empty. Default is 0 (no wait).
 - **Returns**:
   - `stdout` (string): Standard output accumulated since the last read.
   - `stderr` (string): Standard error accumulated since the last read.
@@ -34,6 +46,13 @@ The server MUST provide a tool named `read_output` to retrieve buffered output f
 - **WHEN** the client calls `read_output` with the `sessionId`
 - **THEN** the server returns `stdout` containing "hello\n"
 - **AND** `isActive` reflects the process state (likely false if it finished quickly, or true if long running)
+
+#### Scenario: Wait for output (Long Polling)
+- **GIVEN** a session is running for a command that outputs after a delay (e.g., `sleep 1 && echo "done"`)
+- **AND** the output buffer is currently empty
+- **WHEN** the client calls `read_output` with `sessionId` and `timeout: 2000`
+- **THEN** the server waits until "done" is output (approx 1s)
+- **AND** returns `stdout: "done\n"` immediately upon reception
 
 ### Requirement: Write Session Input
 The server MUST provide a tool named `write_input` to send data to a session's standard input.
