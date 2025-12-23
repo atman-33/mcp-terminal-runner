@@ -13,8 +13,7 @@ export const registerSessionTools = (server: McpServer) => {
       command: z.string().describe('The shell command to execute'),
       cwd: z
         .string()
-        .optional()
-        .describe('Optional working directory to execute the command within'),
+        .describe('The working directory to execute the command within'),
       timeout: z
         .number()
         .optional()
