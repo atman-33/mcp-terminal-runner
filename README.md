@@ -86,36 +86,6 @@ Execute a shell command. Note: This tool is for non-interactive, short-lived com
     - `stdout`: Standard output.
     - `stderr`: Standard error.
 
-#### `read_output`
-Read buffered output from a command session.
-
-- **Input**:
-  - `sessionId` (string): The ID of the session.
-  - `timeout` (number, optional): Maximum time (in milliseconds) to wait for new output if the buffer is empty. Default is 0 (no wait).
-- **Output**:
-  - Returns a YAML-formatted string containing:
-    - `stdout`: Standard output since last read.
-    - `stderr`: Standard error since last read.
-    - `isActive`: Boolean indicating if the process is still running.
-
-#### `write_input`
-Write input to a command session.
-
-- **Input**:
-  - `sessionId` (string): The ID of the session.
-  - `input` (string): The input to write.
-- **Output**:
-  - Returns a YAML-formatted string containing `success: true`.
-
-#### `stop_command`
-Stop a command session.
-
-- **Input**:
-  - `sessionId` (string): The ID of the session.
-  - `signal` (string, optional): The signal to send (default: SIGTERM).
-- **Output**:
-  - Returns a YAML-formatted string containing `success: true`.
-
 ## Development
 
 ### Setup
