@@ -5,7 +5,6 @@ An MCP server that allows AI agents to execute terminal commands on the host sys
 ## Features
 
 - **Execute Command**: Run shell commands and retrieve stdout, stderr, and exit code. Supports pipes, redirects, and command chaining (e.g., `&&`).
-- **Interactive Sessions**: Start background processes, write to stdin, and read stdout/stderr in real-time. Perfect for long-running tasks or interactive tools.
 - **Security**: Strict allowlist system via `ALLOWED_COMMANDS` environment variable.
 - **Cross-Platform**: Works on Linux, macOS, and Windows.
 
@@ -75,7 +74,7 @@ Add the following to your MCP client configuration (e.g., VS Code `settings.json
 ### Available Tools
 
 #### `execute_command`
-Execute a shell command. Note: This tool is for non-interactive, short-lived commands. For interactive or long-running processes, use `start_command` instead.
+Execute a shell command. Note: This tool is for non-interactive, short-lived commands only. Interactive commands are not supported.
 
 - **Input**:
   - `command` (string): The shell command to execute.
@@ -86,18 +85,6 @@ Execute a shell command. Note: This tool is for non-interactive, short-lived com
     - `exit_code`: The command's exit code.
     - `stdout`: Standard output.
     - `stderr`: Standard error.
-
-#### `start_command`
-Start a background command session. Use this for interactive commands or long-running processes.
-
-- **Input**:
-  - `command` (string): The shell command to execute.
-  - `cwd` (string, optional): Optional working directory to execute the command within.
-  - `timeout` (number, optional): Maximum time (in milliseconds) to wait for initial output. Default is 0 (no wait).
-- **Output**:
-  - Returns a YAML-formatted string containing:
-    - `sessionId`: The ID of the created session.
-    - `pid`: The process ID.
     - `stdout`: Initial standard output (if timeout > 0).
     - `stderr`: Initial standard error (if timeout > 0).
 

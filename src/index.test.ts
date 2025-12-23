@@ -80,57 +80,7 @@ describe('MCP Server', () => {
     const output = load(text) as any;
     expect(output.exit_code).toBe(0);
   });
-  describe('Interactive Session', () => {
-    it('should support full interactive flow', async () => {
-      process.env.ALLOWED_COMMANDS = 'cat';
 
-      // 1. Start command
-      const startResult = await client.callTool({
-        name: 'start_command',
-        arguments: { command: 'cat' },
-      });
-      expect(startResult.isError).not.toBe(true);
-      const startOutput = load((startResult.content as any)[0].text) as any;
-      const sessionId = startOutput.sessionId;
-      expect(sessionId).toBeDefined();
-
-      // 2. Write input
-      const writeResult = await client.callTool({
-        name: 'write_input',
-        arguments: { sessionId, input: 'hello interactive\n' },
-      });
-      expect(writeResult.isError).not.toBe(true);
-
-      // 3. Read output (might need a small delay for process to echo)
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const readResult = await client.callTool({
-        name: 'read_output',
-        arguments: { sessionId },
-      });
-      expect(readResult.isError).not.toBe(true);
-      const readOutput = load((readResult.content as any)[0].text) as any;
-      expect(readOutput.stdout).toContain('hello interactive');
-      expect(readOutput.isActive).toBe(true);
-
-      // 4. Stop command
-      const stopResult = await client.callTool({
-        name: 'stop_command',
-        arguments: { sessionId },
-      });
-      expect(stopResult.isError).not.toBe(true);
-
-      // 5. Verify stopped
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      const finalReadResult = await client.callTool({
-        name: 'read_output',
-        arguments: { sessionId },
-      });
-      const finalReadOutput = load(
-        (finalReadResult.content as any)[0].text
-      ) as any;
-      expect(finalReadOutput.isActive).toBe(false);
-    });
-  });
   it('should execute command with input', async () => {
     process.env.ALLOWED_COMMANDS = 'cat';
     const result = await client.callTool({
