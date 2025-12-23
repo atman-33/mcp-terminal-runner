@@ -2,6 +2,22 @@
 
 ---
 
+## v0.3.0 2025-12-23
+
+### Added
+
+- enhance README with details on interactive command tools and usage
+- implement session management and command execution tools
+- implement interactive command session management with start_command and read_output tools
+
+### Changed
+
+- feature/session-commands
+- add interactive command execution support with session management
+- add support for optional working directory (`cwd`) in `execute_command`
+- add .serena to .gitignore
+- Merge pull request #11 from atman-33/version-bump/v0.2.2
+
 ## v0.2.2 2025-12-22
 
 ### Changed
