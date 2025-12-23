@@ -24,7 +24,7 @@ For security reasons, this server requires an explicit list of allowed commands.
 
 ### Security (Optional): Allowed Working Directory Roots
 
-If you enable `cwd` (see tool input below), you can optionally restrict which working directories are allowed via `ALLOWED_CWD_ROOTS`.
+You can optionally restrict which working directories are allowed via `ALLOWED_CWD_ROOTS`.
 
 - **Format**: Comma-separated list of allowed root paths.
 - **Behavior**:
@@ -78,15 +78,13 @@ Execute a shell command. Note: This tool is for non-interactive, short-lived com
 
 - **Input**:
   - `command` (string): The shell command to execute.
-  - `cwd` (string, optional): Optional working directory to execute the command within.
+  - `cwd` (string): The working directory to execute the command within.
   - `input` (string, optional): Optional input to write to stdin. Useful for commands that require user interaction.
 - **Output**:
   - Returns a YAML-formatted string containing:
     - `exit_code`: The command's exit code.
     - `stdout`: Standard output.
     - `stderr`: Standard error.
-    - `stdout`: Initial standard output (if timeout > 0).
-    - `stderr`: Initial standard error (if timeout > 0).
 
 #### `read_output`
 Read buffered output from a command session.
