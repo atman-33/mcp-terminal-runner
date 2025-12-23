@@ -1,0 +1,6 @@
+- [ ] Remove `src/services/session-manager.ts` and associated tests <!-- id: 0 -->
+- [ ] Remove session tools (`start_command`, `read_output`, `write_input`, `stop_command`) from `src/tools/session.ts` and `src/index.ts` <!-- id: 1 -->
+- [ ] Update `src/tools/execute.ts` description to emphasize "non-interactive only" <!-- id: 2 -->
+- [ ] Update `src/tools/execute.ts` error handling to catch `ENOENT` and append interactive mode warning <!-- id: 3 -->
+- [ ] Update `README.md` to remove references to interactive mode and update usage examples <!-- id: 4 -->
+- [ ] Verify `execute_command` still works for standard non-interactive commands <!-- id: 5 -->
