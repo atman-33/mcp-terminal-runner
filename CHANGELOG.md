@@ -2,6 +2,27 @@
 
 ---
 
+## v0.4.0 2025-12-23
+
+### Added
+
+- remove interactive mode support and related tests
+- make cwd parameter mandatory for command execution tools
+
+### Changed
+
+- feature/remove-interactive-mode
+- remove interactive mode support and update documentation
+- remove interactive command session support from documentation
+- Merge remote-tracking branch 'origin/main' into feature/remove-interactive-mode
+- remove interactive mode support due to WSL compatibility issues
+- implement interactive command execution with session management
+- Add comprehensive skill creation guide and initialization scripts
+- feature/cwd-not-optional
+- add inspector script for enhanced command execution
+- add interactive command execution support with session management
+- Merge pull request #13 from atman-33/version-bump/v0.3.0
+
 ## v0.3.0 2025-12-23
 
 ### Added
