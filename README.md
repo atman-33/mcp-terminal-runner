@@ -5,7 +5,6 @@ An MCP server that allows AI agents to execute terminal commands on the host sys
 ## Features
 
 - **Execute Command**: Run shell commands and retrieve stdout, stderr, and exit code. Supports pipes, redirects, and command chaining (e.g., `&&`).
-- **Interactive Sessions**: Start background processes, write to stdin, and read stdout/stderr in real-time. Perfect for long-running tasks or interactive tools.
 - **Security**: Strict allowlist system via `ALLOWED_COMMANDS` environment variable.
 - **Cross-Platform**: Works on Linux, macOS, and Windows.
 
@@ -75,7 +74,7 @@ Add the following to your MCP client configuration (e.g., VS Code `settings.json
 ### Available Tools
 
 #### `execute_command`
-Execute a shell command. Note: This tool is for non-interactive, short-lived commands. For interactive or long-running processes, use `start_command` instead.
+Execute a shell command. Note: This tool is for non-interactive, short-lived commands only. Interactive commands are not supported.
 
 - **Input**:
   - `command` (string): The shell command to execute.
@@ -86,50 +85,6 @@ Execute a shell command. Note: This tool is for non-interactive, short-lived com
     - `exit_code`: The command's exit code.
     - `stdout`: Standard output.
     - `stderr`: Standard error.
-
-#### `start_command`
-Start a background command session. Use this for interactive commands or long-running processes.
-
-- **Input**:
-  - `command` (string): The shell command to execute.
-  - `cwd` (string): The working directory to execute the command within.
-  - `timeout` (number, optional): Maximum time (in milliseconds) to wait for initial output. Default is 0 (no wait).
-- **Output**:
-  - Returns a YAML-formatted string containing:
-    - `sessionId`: The ID of the created session.
-    - `pid`: The process ID.
-    - `stdout`: Initial standard output (if timeout > 0).
-    - `stderr`: Initial standard error (if timeout > 0).
-
-#### `read_output`
-Read buffered output from a command session.
-
-- **Input**:
-  - `sessionId` (string): The ID of the session.
-  - `timeout` (number, optional): Maximum time (in milliseconds) to wait for new output if the buffer is empty. Default is 0 (no wait).
-- **Output**:
-  - Returns a YAML-formatted string containing:
-    - `stdout`: Standard output since last read.
-    - `stderr`: Standard error since last read.
-    - `isActive`: Boolean indicating if the process is still running.
-
-#### `write_input`
-Write input to a command session.
-
-- **Input**:
-  - `sessionId` (string): The ID of the session.
-  - `input` (string): The input to write.
-- **Output**:
-  - Returns a YAML-formatted string containing `success: true`.
-
-#### `stop_command`
-Stop a command session.
-
-- **Input**:
-  - `sessionId` (string): The ID of the session.
-  - `signal` (string, optional): The signal to send (default: SIGTERM).
-- **Output**:
-  - Returns a YAML-formatted string containing `success: true`.
 
 ## Development
 
