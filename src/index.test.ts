@@ -46,7 +46,7 @@ describe('MCP Server', () => {
     process.env.ALLOWED_COMMANDS = 'echo';
     const result = await client.callTool({
       name: 'execute_command',
-      arguments: { command: 'echo hello' },
+      arguments: { command: 'echo hello', cwd: process.cwd() },
     });
 
     expect(result.content).toBeDefined();
@@ -61,7 +61,7 @@ describe('MCP Server', () => {
     process.env.ALLOWED_COMMANDS = 'ls';
     const result = await client.callTool({
       name: 'execute_command',
-      arguments: { command: 'echo hello' },
+      arguments: { command: 'echo hello', cwd: process.cwd() },
     });
 
     expect(result.isError).toBe(true);
@@ -72,7 +72,7 @@ describe('MCP Server', () => {
     process.env.ALLOWED_COMMANDS = '*';
     const result = await client.callTool({
       name: 'execute_command',
-      arguments: { command: 'echo hello' },
+      arguments: { command: 'echo hello', cwd: process.cwd() },
     });
 
     expect(result.content).toBeDefined();
@@ -87,7 +87,7 @@ describe('MCP Server', () => {
       // 1. Start command
       const startResult = await client.callTool({
         name: 'start_command',
-        arguments: { command: 'cat' },
+        arguments: { command: 'cat', cwd: process.cwd() },
       });
       expect(startResult.isError).not.toBe(true);
       const startOutput = load((startResult.content as any)[0].text) as any;
@@ -137,6 +137,7 @@ describe('MCP Server', () => {
       name: 'execute_command',
       arguments: {
         command: 'cat',
+        cwd: process.cwd(),
         input: 'hello world',
       },
     });
@@ -283,6 +284,7 @@ describe('MCP Server', () => {
       name: 'execute_command',
       arguments: {
         command: 'echo hello && echo world',
+        cwd: process.cwd(),
       },
     });
 

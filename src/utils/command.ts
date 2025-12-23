@@ -2,7 +2,7 @@ import { tokenizeArgs } from 'args-tokenizer';
 import spawn from 'cross-spawn';
 import type { CommandResult } from '../types.js';
 import { parseCommaSeparatedEnv } from './env.js';
-import { getWslCwd, resolveAndValidateCwd } from './paths.js';
+import { resolveAndValidateCwd } from './paths.js';
 
 export const runCommand = async (
   command: string,
@@ -50,7 +50,7 @@ export const runCommand = async (
 
 export const prepareCommand = async (
   command: string,
-  cwd?: string
+  cwd: string
 ): Promise<{ command: string; cwd?: string }> => {
   const [bin] = tokenizeArgs(command);
   const allowedCommands = parseCommaSeparatedEnv(process.env.ALLOWED_COMMANDS);
@@ -63,16 +63,12 @@ export const prepareCommand = async (
     );
   }
 
-  const cwdToUse = cwd ?? getWslCwd();
-
-  const cwdResolved = cwdToUse
-    ? await resolveAndValidateCwd(cwdToUse)
-    : undefined;
+  const cwdResolved = await resolveAndValidateCwd(cwd);
 
   let finalCommand = command;
-  let finalCwd = cwdResolved;
+  let finalCwd: string | undefined = cwdResolved;
 
-  if (process.platform === 'win32' && cwdResolved?.startsWith('/')) {
+  if (process.platform === 'win32' && cwdResolved.startsWith('/')) {
     finalCommand = `wsl --cd "${cwdResolved}" -- bash -c "${command.replace(
       /"/g,
       '\\"'
