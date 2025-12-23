@@ -5,9 +5,14 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { load } from 'js-yaml';
 import { server } from './index.js';
+import { registerTools } from './tools/index.js';
 
 describe('MCP Server', () => {
   let client: Client;
+
+  beforeAll(() => {
+    registerTools(server);
+  });
 
   beforeEach(async () => {
     const [clientTransport, serverTransport] =
