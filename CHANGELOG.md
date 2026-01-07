@@ -2,6 +2,27 @@
 
 ---
 
+## v0.4.1 2026-01-07
+
+### Added
+
+- improve command execution handling and error messaging
+- add SkillPort configuration and enhance AGENTS.md with skill guidelines
+
+### Changed
+
+- feature/improve-output-error-message
+- add local MCP testing documentation for VS Code setup
+- update .gitignore to include .skillportrc and .claude directories
+- remove SkillPort configuration from AGENTS.md
+- remove SKILL.md, output-patterns.md, workflows.md, and initialization scripts
+- add guidelines for activating Serena projects in WSL environments
+- Merge pull request #16 from atman-33/version-bump/v0.4.0
+
+### Fixed
+
+- add missing newline at end of package.json
+
 ## v0.4.0 2025-12-23
 
 ### Added
