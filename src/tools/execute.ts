@@ -21,12 +21,14 @@ export const registerExecuteTool = (server: McpServer) => {
     },
     async (args) => {
       try {
-        const { command: finalCommand, cwd: finalCwd } = await prepareCommand(
-          args.command,
-          args.cwd
-        );
+        const exec = await prepareCommand(args.command, args.cwd);
 
-        const result = await runCommand(finalCommand, finalCwd, args.input);
+        const result = await runCommand(
+          exec.file,
+          exec.args,
+          exec.cwd,
+          args.input
+        );
 
         return {
           content: [
