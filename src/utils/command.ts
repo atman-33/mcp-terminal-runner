@@ -4,15 +4,21 @@ import type { CommandResult } from '../types.js';
 import { parseCommaSeparatedEnv } from './env.js';
 import { resolveAndValidateCwd } from './paths.js';
 
+interface PreparedExecution {
+  file: string;
+  args: string[];
+  cwd?: string;
+}
+
 export const runCommand = async (
-  command: string,
+  file: string,
+  args: string[],
   cwd?: string,
   input?: string
 ): Promise<CommandResult> =>
   new Promise<CommandResult>((resolvePromise, rejectPromise) => {
-    const child = spawn(command, {
+    const child = spawn(file, args, {
       cwd,
-      shell: true,
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -51,7 +57,7 @@ export const runCommand = async (
 export const prepareCommand = async (
   command: string,
   cwd: string
-): Promise<{ command: string; cwd?: string }> => {
+): Promise<PreparedExecution> => {
   const [bin] = tokenizeArgs(command);
   const allowedCommands = parseCommaSeparatedEnv(process.env.ALLOWED_COMMANDS);
 
@@ -65,16 +71,27 @@ export const prepareCommand = async (
 
   const cwdResolved = await resolveAndValidateCwd(cwd);
 
-  let finalCommand = command;
-  let finalCwd: string | undefined = cwdResolved;
-
+  // On Windows, treat a POSIX-style cwd as a request to execute inside WSL.
+  // We execute via: wsl --cd <cwd> -- bash -lc <command>
   if (process.platform === 'win32' && cwdResolved.startsWith('/')) {
-    finalCommand = `wsl --cd "${cwdResolved}" -- bash -c "${command.replace(
-      /"/g,
-      '\\"'
-    )}"`;
-    finalCwd = undefined;
+    return {
+      file: 'wsl',
+      args: ['--cd', cwdResolved, '--', 'bash', '-lc', command],
+    };
   }
 
-  return { command: finalCommand, cwd: finalCwd };
+  if (process.platform === 'win32') {
+    return {
+      file: 'cmd.exe',
+      args: ['/d', '/s', '/c', command],
+      cwd: cwdResolved,
+    };
+  }
+
+  // POSIX (Linux/macOS)
+  return {
+    file: 'bash',
+    args: ['-lc', command],
+    cwd: cwdResolved,
+  };
 };
