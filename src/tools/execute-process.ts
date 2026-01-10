@@ -3,16 +3,20 @@ import { dump } from 'js-yaml';
 import { z } from 'zod';
 import {
   DEFAULT_TIMEOUT_MS,
-  prepareCommand,
+  prepareProcess,
   runCommand,
 } from '../utils/command.js';
 
-export const registerExecuteTool = (server: McpServer) => {
+export const registerExecuteProcessTool = (server: McpServer) => {
   server.tool(
-    'execute_command',
-    'Execute a shell command. Note: This tool is for non-interactive, short-lived commands only. Interactive commands are not supported.',
+    'execute_process',
+    'Execute a program using argv-style inputs (non-shell). Note: This tool is for non-interactive, short-lived commands only. Interactive commands are not supported.',
     {
-      command: z.string().describe('The shell command to execute'),
+      file: z.string().describe('The program to execute (e.g., python3)'),
+      args: z
+        .array(z.string())
+        .default([])
+        .describe('The argv arguments to pass to the program'),
       cwd: z
         .string()
         .describe('The working directory to execute the command within'),
@@ -32,16 +36,20 @@ export const registerExecuteTool = (server: McpServer) => {
           `Optional timeout in milliseconds. If omitted, defaults to ${DEFAULT_TIMEOUT_MS}ms.`
         ),
     },
-    async (args) => {
+    async (toolArgs) => {
       try {
-        const exec = await prepareCommand(args.command, args.cwd);
+        const exec = await prepareProcess(
+          toolArgs.file,
+          toolArgs.args,
+          toolArgs.cwd
+        );
 
         const result = await runCommand({
           file: exec.file,
           args: exec.args,
           cwd: exec.cwd,
-          input: args.input,
-          timeoutMs: args.timeout_ms,
+          input: toolArgs.input,
+          timeoutMs: toolArgs.timeout_ms,
         });
 
         if (result.timedOut) {
@@ -73,14 +81,8 @@ export const registerExecuteTool = (server: McpServer) => {
           ],
         };
       } catch (error) {
-        let errorMessage =
+        const errorMessage =
           error instanceof Error ? error.message : String(error);
-
-        if (errorMessage.includes('ENOENT')) {
-          errorMessage +=
-            '\nNote: This tool does not support interactive commands. Ensure the command is non-interactive and the executable exists.';
-        }
-
         return {
           content: [
             {
