@@ -2,6 +2,25 @@
 
 ---
 
+## v0.5.0 2026-01-10
+
+### Added
+
+- add execute_process tool and timeout handling for commands
+
+### Changed
+
+- bug-fix/not-finish-executing
+- add timeout support and argv-based execution for commands
+- update README to include details on execute_process tool and timeout handling
+- add timeout support and argv-based execution for commands
+- add Serena MCP Development Guidelines for code investigation and WSL handling
+- Merge pull request #18 from atman-33/version-bump/v0.4.1
+
+### Fixed
+
+- update .gitignore to include .vscode/mcp.json and add VSCode settings
+
 ## v0.4.1 2026-01-07
 
 ### Added
