@@ -5,7 +5,9 @@ An MCP server that allows AI agents to execute terminal commands on the host sys
 ## Features
 
 - **Execute Command**: Run shell commands and retrieve stdout, stderr, and exit code. Supports pipes, redirects, and command chaining (e.g., `&&`).
+- **Execute Process (argv)**: Run a program with argv-style inputs (no shell parsing). Useful for passing large/multiline arguments safely.
 - **Security**: Strict allowlist system via `ALLOWED_COMMANDS` environment variable.
+- **Timeouts**: Commands have a default timeout (30,000ms) to prevent hanging indefinitely.
 - **Cross-Platform**: Works on Linux, macOS, and Windows.
 
 ## Prerequisites
@@ -80,6 +82,26 @@ Execute a shell command. Note: This tool is for non-interactive, short-lived com
   - `command` (string): The shell command to execute.
   - `cwd` (string): The working directory to execute the command within.
   - `input` (string, optional): Optional input to write to stdin. Useful for commands that require user interaction.
+  - `timeout_ms` (number, optional): Timeout in milliseconds. Defaults to 30,000ms. Max 600,000ms.
+- **Output**:
+  - Returns a YAML-formatted string containing:
+    - `exit_code`: The command's exit code.
+    - `stdout`: Standard output.
+    - `stderr`: Standard error.
+
+On timeout, the tool returns `isError: true` and includes a timeout message.
+
+#### `execute_process`
+Execute a program using argv-style inputs (non-shell). Note: This tool is for non-interactive, short-lived commands only. Interactive commands are not supported.
+
+This tool is recommended when you need to pass large or multiline arguments (e.g., `--content` with newlines) without dealing with shell quoting.
+
+- **Input**:
+  - `file` (string): The program to execute (e.g., `python3`).
+  - `args` (string[], optional): argv arguments to pass to the program.
+  - `cwd` (string): The working directory to execute the command within.
+  - `input` (string, optional): Optional input to write to stdin.
+  - `timeout_ms` (number, optional): Timeout in milliseconds. Defaults to 30,000ms. Max 600,000ms.
 - **Output**:
   - Returns a YAML-formatted string containing:
     - `exit_code`: The command's exit code.
