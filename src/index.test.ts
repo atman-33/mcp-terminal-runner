@@ -40,6 +40,7 @@ describe('MCP Server', () => {
     const result = await client.listTools();
     expect(result.tools).toBeDefined();
     expect(result.tools.some((t) => t.name === 'execute_command')).toBe(true);
+    expect(result.tools.some((t) => t.name === 'execute_process')).toBe(true);
   });
 
   it('should execute allowed command', async () => {
@@ -244,5 +245,63 @@ describe('MCP Server', () => {
     expect(output.exit_code).toBe(0);
     expect(output.stdout).toContain('hello');
     expect(output.stdout).toContain('world');
+  });
+
+  it('should time out execute_command and return error', async () => {
+    process.env.ALLOWED_COMMANDS = 'sleep';
+
+    const result = await client.callTool({
+      name: 'execute_command',
+      arguments: {
+        command: 'sleep 2',
+        cwd: process.cwd(),
+        timeout_ms: 50,
+      },
+    });
+
+    expect(result.isError).toBe(true);
+    const text = (result.content as any)[0].text;
+    const output = load(text) as any;
+    expect(output.exit_code).toBe(124);
+    expect(String(output.stderr)).toContain('Timed out after 50ms');
+  });
+
+  it('should execute argv-based process with execute_process', async () => {
+    process.env.ALLOWED_COMMANDS = 'python3';
+
+    const result = await client.callTool({
+      name: 'execute_process',
+      arguments: {
+        file: 'python3',
+        args: ['-c', 'print("hello")'],
+        cwd: process.cwd(),
+      },
+    });
+
+    if (result.isError) {
+      const message = (result.content as any)?.[0]?.text ?? 'unknown error';
+      throw new Error(message);
+    }
+
+    const text = (result.content as any)[0].text;
+    const output = load(text) as any;
+    expect(output.exit_code).toBe(0);
+    expect(String(output.stdout)).toContain('hello');
+  });
+
+  it('should reject disallowed execute_process file', async () => {
+    process.env.ALLOWED_COMMANDS = 'echo';
+
+    const result = await client.callTool({
+      name: 'execute_process',
+      arguments: {
+        file: 'python3',
+        args: ['-c', 'print("hello")'],
+        cwd: process.cwd(),
+      },
+    });
+
+    expect(result.isError).toBe(true);
+    expect((result.content as any)[0].text).toContain('not allowed');
   });
 });
